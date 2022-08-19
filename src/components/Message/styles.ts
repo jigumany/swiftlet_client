@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     minWidth: 120,
-    overflow: "hidden",
+    // overflow: "hidden",
     shadowColor: "#000000",
     shadowOpacity: 0.8,
     shadowRadius: 2,
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
       width: 0,
     },
     elevation: 3,
+    padding: 10,
   },
   yourMessageWtImage: {
     fontFamily: "Poppins_500Medium",

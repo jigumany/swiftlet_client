@@ -98,13 +98,13 @@ const ChatRoomHeader = ({ chatRoom }) => {
 
           <CollapseBody style={styles.CollapseBody}>
             <View style={styles.collapsedItem}>
-              <Pressable onPress={voiceCallUser}>
+              <Pressable onPress={voiceCallUser} style={styles.call}>
                 <VoicecallIcon />
                 <Text style={styles.pageHeading}>Call</Text>
               </Pressable>
             </View>
             <View style={styles.collapsedItem}>
-              <Pressable onPress={videoCallUser}>
+              <Pressable onPress={videoCallUser} style={styles.call}>
                 <VideoIcon />
                 <Text style={styles.pageHeadingVideo}>Video</Text>
               </Pressable>
@@ -121,7 +121,6 @@ export default ChatRoomHeader;
 const styles = StyleSheet.create({
   topBar: {
     width: "100%",
-    display: "flex",
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -139,25 +138,27 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_500Medium",
     fontSize: 16,
     color: "#656F99",
-    paddingLeft: 7,
   },
   pageHeadingVideo: {
     fontFamily: "Poppins_500Medium",
     fontSize: 16,
     color: "#656F99",
-    paddingLeft: 2,
+    alignItems: "center",
+  },
+  call: {
+    alignItems: "center",
   },
   CollapseBody: {
     flexDirection: "row",
     justifyContent: "space-between",
     position: "relative",
+    textAlign: "center",
   },
   collapsedItem: {
     paddingHorizontal: 10,
     fontSize: 1,
   },
   CollapseHeader: {
-    display: "flex",
     justifyContent: "center",
     alignItems: "center",
   },

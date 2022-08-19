@@ -64,6 +64,7 @@ function RootNavigator() {
         component={HomeScreen}
         options={{ headerShown: false }}
       />
+
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}

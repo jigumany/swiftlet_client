@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "505547361821",
-    "project_id": "swiftletprod",
-    "storage_bucket": "swiftletprod.appspot.com"
+    "project_number": "6953507566",
+    "project_id": "swiftlet-65123",
+    "storage_bucket": "swiftlet-65123.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:505547361821:android:9c21b8367f17bd2d7b40f4",
+        "mobilesdk_app_id": "1:6953507566:android:2cb1620686a2fa033171ff",
         "android_client_info": {
           "package_name": "com.georgem.demo2"
         }
       },
       "oauth_client": [
         {
-          "client_id": "505547361821-bhcaqjrde6ihl0ib1fk4t3966q8brd2n.apps.googleusercontent.com",
+          "client_id": "6953507566-2220b9tsncdp8vkkmo1ab1lmef20rckf.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC6lXAWillK7SWIWvhU7N_z0TvyjrUuldc"
+          "current_key": "AIzaSyB6-DcmGUjFFi5j5hpLPt_NyvTyLQPV3KY"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "505547361821-bhcaqjrde6ihl0ib1fk4t3966q8brd2n.apps.googleusercontent.com",
+              "client_id": "6953507566-2220b9tsncdp8vkkmo1ab1lmef20rckf.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

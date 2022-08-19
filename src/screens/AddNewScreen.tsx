@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   View,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { Shadow } from "react-native-shadow-2";
 import { InputshadowPresets } from "../components/Shadows/InputshadowPresets";
@@ -103,7 +104,10 @@ const AddNewScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.page}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.page}
+    >
       <Text style={styles.subheading}>Enter user pin</Text>
 
       <Shadow
@@ -131,7 +135,9 @@ const AddNewScreen = () => {
             </View>
           ) : (
             <View style={styles.check}>
-              <Entypo name="cross" size={24} color="red" />
+              <Pressable onPress={() => navigation.goBack()}>
+                <Entypo name="cross" size={24} color="red" />
+              </Pressable>
             </View>
           )}
         </View>
@@ -151,7 +157,7 @@ const AddNewScreen = () => {
           ) : (
             <View style={styles.buttonWrap}>
               <Pressable style={styles.button} onPress={connect}>
-                <Text style={styles.buttonText}>Save</Text>
+                <Text style={styles.buttonText}>Add</Text>
               </Pressable>
             </View>
           )}

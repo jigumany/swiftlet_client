@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, FlatList, TextInput, Alert } from "react-native";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  Alert,
+  BackHandler,
+  Platform,
+} from "react-native";
 import ChatRoomItem from "../components/ChatRoomItem";
 import GroupChatRoomItem from "../components/GroupChatRoomItem";
 import HomeHeader from "../navigation/HomeHeader";
@@ -20,6 +28,20 @@ import { useObservable } from "../hooks";
 import { currentSessionSubject } from "../sessions/state";
 import CustomSwitch from "../navigation/CustomSwitch";
 
+import { useFocusEffect } from "@react-navigation/native";
+
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
+import firebase from "@react-native-firebase/app";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 export default function HomeScreen() {
   const [chatRooms, setChatRooms] = useState([]);
   const [groupChats, setGroupChats] = useState([]);
@@ -28,6 +50,11 @@ export default function HomeScreen() {
   const [messagesTab, setMessagesTab] = useState(1);
   const [message, setMessage] = useState();
   const password = "4Hlj%jn4";
+
+  const [expoPushToken, setExpoPushToken] = useState("");
+  const [notification, setNotification] = useState(false);
+  const notificationListener = useRef();
+  const responseListener = useRef();
 
   const session = useObservable(currentSessionSubject, null);
   const voximplant = Voximplant.getInstance();
@@ -54,6 +81,28 @@ export default function HomeScreen() {
       setMessage(message);
     },
   });
+
+  // prevent logged in user from going back
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        Alert.alert("Hold on!", "Are you sure you want to Exit?", [
+          {
+            text: "Cancel",
+            onPress: () => null,
+            style: "cancel",
+          },
+          { text: "YES", onPress: () => BackHandler.exitApp() },
+        ]);
+        return true;
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () =>
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+    }, [])
+  );
 
   // refetch chatrooms
   useEffect(() => {
@@ -142,6 +191,12 @@ export default function HomeScreen() {
     }
   }, [authData]);
 
+  useEffect(() => {
+    registerForPushNotificationsAsync().then((token) =>
+      setExpoPushToken(token)
+    );
+  }, []);
+
   const onSelectSwitch = (value) => {
     setMessagesTab(value);
   };
@@ -221,6 +276,76 @@ export default function HomeScreen() {
       )}
     </SafeAreaView>
   );
+}
+
+// NOTIFICATIONS
+
+// initialize firebaase app for messaging
+if (!firebase.apps.length) {
+  firebase
+    .initializeApp({
+      appId: "1:6953507566:android:2cb1620686a2fa033171ff",
+      apiKey: "AIzaSyB6-DcmGUjFFi5j5hpLPt_NyvTyLQPV3KY",
+      databaseURL: "https://swiftlet.firebaseio.com/",
+      projectId: "swiftlet-65123",
+      storageBucket: "swiftlet-65123.appspot.com",
+      messagingSenderId: "6953507566",
+    })
+    .catch(console.error);
+} else {
+  firebase.app(); // if already initialized, use that one
+}
+
+// get the expoPushToken
+async function registerForPushNotificationsAsync() {
+  if (!Constants.isDevice) {
+    alert("Must use a physical device for push Notifications");
+    return null;
+  }
+
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== "granted") {
+    alert("Failed to get push token for push notifications");
+    return null;
+  }
+
+  if (Platform.OS === "android") {
+    Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
+
+  const token = (
+    await Notifications.getExpoPushTokenAsync({
+      experienceId: "@georgem/swiftlet",
+    })
+  ).data;
+
+  return token;
+}
+
+// send push notification
+async function sendPushNotification(expoPushToken) {
+  const message = {
+    to: expoPushToken,
+    sound: "default",
+    title: "Original Title",
+    body: "And here is the body!",
+    data: { someData: "goes here" },
+  };
+
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Accept-encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
 }
 
 const styles = StyleSheet.create({

@@ -8,9 +8,11 @@ import {
   Alert,
   Text,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import EmojiPicker from "rn-emoji-keyboard";
 import styles from "./styles";
 import { Audio } from "expo-av";
@@ -160,17 +162,45 @@ const MessageInput = ({ chatRoom, remoteUsername }) => {
     setImage(null);
   };
 
+  const getFileInfo = async (fileURI: string) => {
+    const fileInfo = await FileSystem.getInfoAsync(fileURI);
+    return fileInfo;
+  };
+
+  const isLessThanTheMB = (fileSize: number, smallerThanSizeMB: number) => {
+    const isOk = fileSize / 1024 / 1024 < smallerThanSizeMB;
+    return isOk;
+  };
+
   // image piker
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 0.5,
+      quality: 0,
     });
 
-    if (!result.cancelled) {
-      setImage(result.uri);
+    if (result.cancelled) return;
+
+    const { uri, type } = result;
+    const fileInfo = await getFileInfo(result.uri);
+
+    if (!fileInfo?.size) {
+      alert("Can't select this file as the size is unknown.");
+      return;
     }
+
+    if (type === "image") {
+      const isLt10MB = isLessThanTheMB(fileInfo.size, 10);
+
+      console.log(fileInfo.size / 1024 / 1024);
+      if (!isLt10MB) {
+        alert(`Image size must be smaller than 10MB!`);
+        return;
+      }
+    }
+
+    setImage(result.uri);
 
     toggleModal();
   };
@@ -179,7 +209,7 @@ const MessageInput = ({ chatRoom, remoteUsername }) => {
     let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 0.5,
+      quality: 0,
     });
 
     if (!result.cancelled) {
@@ -306,169 +336,177 @@ const MessageInput = ({ chatRoom, remoteUsername }) => {
   };
 
   return (
-    <Shadow {...FullshadowPresets.button} viewStyle={{ alignSelf: "stretch" }}>
-      <View style={styles.topBar}>
-        {image && (
-          <View style={styles.sendImageContainer}>
-            <Image
-              source={{ uri: image }}
-              style={{ width: 150, height: 150, borderRadius: 10 }}
-            />
-
-            {uploading && (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: "flex-start",
-                  alignSelf: "center",
-                  marginLeft: 15,
-                  backgroundColor: "#fff",
-                  alignItems: "center",
-                }}
-              >
-                <ActivityIndicator color="#656F99" animating size="large" />
-              </View>
-            )}
-
-            <Pressable onPress={remove}>
-              <AntDesign
-                name="close"
-                size={20}
-                color="#656F99"
-                style={{
-                  margin: 5,
-                  padding: 5,
-                  borderRadius: 15,
-                  backgroundColor: "#F1F4F8",
-                }}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ marginBottom: 10 }}
+    >
+      <Shadow
+        {...FullshadowPresets.button}
+        viewStyle={{ alignSelf: "stretch" }}
+      >
+        <View style={styles.topBar}>
+          {image && (
+            <View style={styles.sendImageContainer}>
+              <Image
+                source={{ uri: image }}
+                style={{ width: 150, height: 150, borderRadius: 10 }}
               />
-            </Pressable>
-          </View>
-        )}
 
-        {!!soundURI && <AudioPlayer soundURI={soundURI} />}
+              {uploading && (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "flex-start",
+                    alignSelf: "center",
+                    marginLeft: 15,
+                    backgroundColor: "#fff",
+                    alignItems: "center",
+                  }}
+                >
+                  <ActivityIndicator color="#656F99" animating size="large" />
+                </View>
+              )}
 
-        <View style={styles.row}>
-          <View style={styles.inputContainer}>
-            <View>
-              <Pressable onPress={toggleEmojiPicker}>
-                <SmileIcon />
+              <Pressable onPress={remove}>
+                <AntDesign
+                  name="close"
+                  size={20}
+                  color="#656F99"
+                  style={{
+                    margin: 5,
+                    padding: 5,
+                    borderRadius: 15,
+                    backgroundColor: "#F1F4F8",
+                  }}
+                />
               </Pressable>
             </View>
+          )}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Type message..."
-              placeholderTextColor="#656f99"
-              value={message}
-              onChangeText={setMessage}
-            />
+          {!!soundURI && <AudioPlayer soundURI={soundURI} />}
 
-            <Modal
-              isVisible={isModalVisible}
-              onBackButtonPress={toggleModal}
-              onBackdropPress={() => setModalVisible(false)}
-              onSwipeComplete={() => setModalVisible(false)}
-              swipeDirection="left"
-              coverScreen={true}
-              hasBackdrop={true}
-              backdropColor={"#fff"}
-              backdropTransitionOutTiming={0}
-              style={{
-                padding: 10,
-                flex: 1,
-                maxHeight: 80,
-                alignSelf: "stretch",
-                marginTop: "auto",
-                display: "flex",
-                justifyContent: "center",
-                marginHorizontal: 10,
-                backgroundColor: "#F1F4F8",
-                position: "relative",
-                marginBottom: 10,
-                borderRadius: 10,
-              }}
-            >
-              <View style={styles.modalInner}>
-                <View style={styles.modalCta}>
-                  <Pressable onPress={pickImage}>
-                    <AttachmentIcon />
-                  </Pressable>
-                </View>
-
-                <View style={styles.modalCta}>
-                  <Pressable onPress={takePhoto}>
-                    <PhotoIcon />
-                  </Pressable>
-                </View>
-
-                <View style={styles.modalCta}>
-                  {recording && (
-                    <Text
-                      style={{
-                        position: "absolute",
-                        bottom: 65,
-                        right: 15,
-                        width: 120,
-                        paddingVertical: 8,
-                        borderRadius: 60,
-                        textAlign: "center",
-                        justifyContent: "center",
-                        fontSize: 16,
-                        color: "#fff",
-                        backgroundColor: "rgba(0,0,0,0.5)",
-                      }}
-                    >
-                      Recording...
-                    </Text>
-                  )}
-                  <Pressable
-                    onPress={recording ? stopRecording : startRecording}
-                  >
-                    {recording ? <RecVoiceIcon /> : <VoiceIcon />}
-                  </Pressable>
-                </View>
-
-                <View style={styles.modalCta}>
-                  <Pressable onPress={toggleModal}>
-                    <CloseIcon />
-                  </Pressable>
-                </View>
+          <View style={styles.row}>
+            <View style={styles.inputContainer}>
+              <View>
+                <Pressable onPress={toggleEmojiPicker}>
+                  <SmileIcon />
+                </Pressable>
               </View>
-            </Modal>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Type message..."
+                placeholderTextColor="#656f99"
+                value={message}
+                onChangeText={setMessage}
+              />
+
+              <Modal
+                isVisible={isModalVisible}
+                onBackButtonPress={toggleModal}
+                onBackdropPress={() => setModalVisible(false)}
+                onSwipeComplete={() => setModalVisible(false)}
+                swipeDirection="left"
+                coverScreen={true}
+                hasBackdrop={true}
+                backdropColor={"#fff"}
+                backdropTransitionOutTiming={0}
+                style={{
+                  padding: 10,
+                  flex: 1,
+                  maxHeight: 80,
+                  alignSelf: "stretch",
+                  marginTop: "auto",
+                  display: "flex",
+                  justifyContent: "center",
+                  marginHorizontal: 10,
+                  backgroundColor: "#F1F4F8",
+                  position: "relative",
+                  marginBottom: 10,
+                  borderRadius: 10,
+                }}
+              >
+                <View style={styles.modalInner}>
+                  <View style={styles.modalCta}>
+                    <Pressable onPress={pickImage}>
+                      <AttachmentIcon />
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.modalCta}>
+                    <Pressable onPress={takePhoto}>
+                      <PhotoIcon />
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.modalCta}>
+                    {recording && (
+                      <Text
+                        style={{
+                          position: "absolute",
+                          bottom: 65,
+                          right: 15,
+                          width: 120,
+                          paddingVertical: 8,
+                          borderRadius: 60,
+                          textAlign: "center",
+                          justifyContent: "center",
+                          fontSize: 16,
+                          color: "#fff",
+                          backgroundColor: "rgba(0,0,0,0.5)",
+                        }}
+                      >
+                        Recording...
+                      </Text>
+                    )}
+                    <Pressable
+                      onPress={recording ? stopRecording : startRecording}
+                    >
+                      {recording ? <RecVoiceIcon /> : <VoiceIcon />}
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.modalCta}>
+                    <Pressable onPress={toggleModal}>
+                      <CloseIcon />
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
+            </View>
+            <Pressable onPress={onPress} style={styles.buttonContainer}>
+              {message || image || soundURI ? (
+                <Ionicons name="send" size={18} color="white" />
+              ) : (
+                <Shadow {...ButtonshadowPresets.button}>
+                  <PlussIcon />
+                </Shadow>
+              )}
+            </Pressable>
           </View>
-          <Pressable onPress={onPress} style={styles.buttonContainer}>
-            {message || image || soundURI ? (
-              <Ionicons name="send" size={18} color="white" />
-            ) : (
-              <Shadow {...ButtonshadowPresets.button}>
-                <PlussIcon />
-              </Shadow>
-            )}
-          </Pressable>
+          {isEmojiPickerOpen && (
+            <EmojiPicker
+              onEmojiSelected={({ emoji }) =>
+                setMessage((currentMessage) => currentMessage + emoji)
+              }
+              open={isEmojiPickerOpen}
+              onClose={() => setIsEmojiPickerOpen(false)}
+              emojiSize={30}
+              enableSearchBar={true}
+              searchBarStyles={{
+                borderColor: "#656F99",
+              }}
+              searchBarPlaceholderColor={"#656F99"}
+              searchBarTextStyles={{ color: "#656F99" }}
+              closeSearchColor={"#656F99"}
+              headerStyles={{ color: "#656F99" }}
+              categoryContainerColor={"#F1F4F8"}
+              categoryContainerStyles={{ maxWidth: "100%", padding: 8 }}
+            />
+          )}
         </View>
-        {isEmojiPickerOpen && (
-          <EmojiPicker
-            onEmojiSelected={({ emoji }) =>
-              setMessage((currentMessage) => currentMessage + emoji)
-            }
-            open={isEmojiPickerOpen}
-            onClose={() => setIsEmojiPickerOpen(false)}
-            emojiSize={30}
-            enableSearchBar={true}
-            searchBarStyles={{
-              borderColor: "#656F99",
-            }}
-            searchBarPlaceholderColor={"#656F99"}
-            searchBarTextStyles={{ color: "#656F99" }}
-            closeSearchColor={"#656F99"}
-            headerStyles={{ color: "#656F99" }}
-            categoryContainerColor={"#F1F4F8"}
-            categoryContainerStyles={{ maxWidth: "100%", padding: 8 }}
-          />
-        )}
-      </View>
-    </Shadow>
+      </Shadow>
+    </KeyboardAvoidingView>
   );
 };
 

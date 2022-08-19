@@ -29,7 +29,7 @@ import {
 import { useFonts } from "expo-font";
 import { ActivityIndicator } from "react-native";
 
-function App() {
+export default function App() {
   let [fontsLoaded, error] = useFonts({
     Poppins_100Thin,
     Poppins_100Thin_Italic,
@@ -64,4 +64,3 @@ function App() {
     </SafeAreaProvider>
   );
 }
-export default App;

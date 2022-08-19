@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import MyProfileHeader from "../navigation/MyProfileHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Shadow } from "react-native-shadow-2";
@@ -31,11 +33,18 @@ const MyProfileScreen = () => {
 
   const [updateUser, { data, error, loading }] = useMutation(UPDATE_USER);
 
+  // if the upload is successful set the image
   useEffect(() => {
     if (data) {
       setNewImage(data.updateUser.imageUri);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (error) {
+      alert("Image file too large");
+    }
+  }, [error]);
 
   useEffect(() => {
     (async () => {
@@ -84,17 +93,45 @@ const MyProfileScreen = () => {
     }
   }, [image]);
 
+  const getFileInfo = async (fileURI: string) => {
+    const fileInfo = await FileSystem.getInfoAsync(fileURI);
+    return fileInfo;
+  };
+
+  const isLessThanTheMB = (fileSize: number, smallerThanSizeMB: number) => {
+    const isOk = fileSize / 1024 / 1024 < smallerThanSizeMB;
+    return isOk;
+  };
+
   // image piker
   const uploadImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 1,
+      quality: 0.5,
     });
 
-    if (!result.cancelled) {
-      setImage(result.uri);
+    if (result.cancelled) return;
+
+    const { uri, type } = result;
+    const fileInfo = await getFileInfo(result.uri);
+
+    if (!fileInfo?.size) {
+      alert("Can't select this file as the size is unknown.");
+      return;
     }
+
+    if (type === "image") {
+      const isLt10MB = isLessThanTheMB(fileInfo.size, 10);
+
+      console.log(fileInfo.size / 1024 / 1024);
+      if (!isLt10MB) {
+        alert(`Image size must be smaller than 10MB!`);
+        return;
+      }
+    }
+
+    setImage(result.uri);
   };
 
   if (loading) {

@@ -71,7 +71,7 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.page}>
+    <KeyboardAvoidingView behavior="padding" style={styles.page}>
       <View style={styles.logo}>
         <Image source={logo} style={{ width: 305, height: 159 }} />
       </View>

@@ -5,7 +5,7 @@ import { createUploadLink } from "apollo-upload-client";
 import { WebSocketLink } from "@apollo/client/link/ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 
-const URI = "http://192.168.88.17:4000/graphql";
+const URI = "http://172.105.95.129/graphql";
 
 const parseHeaders = (rawHeaders: any) => {
   const headers = new Headers();
